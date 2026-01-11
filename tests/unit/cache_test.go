@@ -10,7 +10,7 @@ import (
 	"sync"
 	"testing"
 	"time"
-
+    "github.com/krishnajain872/country-search-api-cache/pkg/cache"
 	"github.com/krishnajain872/country-search-api-cache/pkg/types"
 )
 

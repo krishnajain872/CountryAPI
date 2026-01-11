@@ -5,13 +5,13 @@
 package integration
 
 import (
-	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 	"time"
-
+	"fmt"
+	"sync"
 	"github.com/krishnajain872/country-search-api-cache/internal/config"
 	"github.com/krishnajain872/country-search-api-cache/internal/handler"
 	"github.com/krishnajain872/country-search-api-cache/internal/logger"
@@ -19,7 +19,6 @@ import (
 	"github.com/krishnajain872/country-search-api-cache/internal/service"
 	"github.com/krishnajain872/country-search-api-cache/pkg/cache"
 	"github.com/krishnajain872/country-search-api-cache/pkg/httpclient"
-	"github.com/krishnajain872/country-search-api-cache/pkg/types"
 )
 
 func setupTestServer(t *testing.T) http.Handler {

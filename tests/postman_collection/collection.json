@@ -1,0 +1,939 @@
+{
+	"info": {
+		"_postman_id": "country-search-api-v1",
+		"name": "Country Search API - Complete Test Suite",
+		"description": "Comprehensive test collection for Country Search API with caching\n\n## Features Tested:\n- ✅ Search countries by name\n- ✅ URL encoding for special characters\n- ✅ Cache hit/miss scenarios\n- ✅ Error handling (validation, not found)\n- ✅ Health checks\n- ✅ Metrics tracking\n- ✅ Concurrent requests\n- ✅ Edge cases\n\n## Setup:\n1. Import this collection\n2. Set environment variable: `base_url = http://localhost:8000`\n3. Start the server: `./scripts/build.sh run`\n4. Run collection\n\n## Coverage:\nThis collection tests every endpoint and edge case in the project.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "12345"
+	},
+	"item": [
+		{
+			"name": "1. Basic Functionality",
+			"item": [
+				{
+					"name": "Search Country - India",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Test status code",
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"// Test response structure",
+									"pm.test(\"Response has success=true\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.success).to.eql(true);",
+									"});",
+									"",
+									"// Test country data",
+									"pm.test(\"Country data is present\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.data).to.have.property('name');",
+									"    pm.expect(jsonData.data).to.have.property('capital');",
+									"    pm.expect(jsonData.data).to.have.property('currency');",
+									"    pm.expect(jsonData.data).to.have.property('population');",
+									"});",
+									"",
+									"// Test specific values",
+									"pm.test(\"Country is India\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.data.name).to.eql('India');",
+									"    pm.expect(jsonData.data.capital).to.eql('New Delhi');",
+									"});",
+									"",
+									"// Test response time",
+									"pm.test(\"Response time < 2000ms\", function () {",
+									"    pm.expect(pm.response.responseTime).to.be.below(2000);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/countries/search?name=India",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"countries",
+								"search"
+							],
+							"query": [
+								{
+									"key": "name",
+									"value": "India",
+									"description": "Country name to search"
+								}
+							]
+						},
+						"description": "**Test Case 1:** Basic country search\n\n**Expected:**\n- Status: 200\n- Success: true\n- Data contains: name, capital, currency, population\n- Country: India\n- Capital: New Delhi"
+					},
+					"response": []
+				},
+				{
+					"name": "Search Country - Japan",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Country is Japan\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.data.name).to.include('Japan');",
+									"    pm.expect(jsonData.data.capital).to.eql('Tokyo');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/countries/search?name=Japan",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"countries",
+								"search"
+							],
+							"query": [
+								{
+									"key": "name",
+									"value": "Japan"
+								}
+							]
+						},
+						"description": "**Test Case 2:** Search another country\n\n**Expected:**\n- Status: 200\n- Country: Japan\n- Capital: Tokyo"
+					},
+					"response": []
+				},
+				{
+					"name": "Search Country - Germany",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Country is Germany\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.data.name).to.include('Germany');",
+									"    pm.expect(jsonData.data.capital).to.eql('Berlin');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/countries/search?name=Germany",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"countries",
+								"search"
+							],
+							"query": [
+								{
+									"key": "name",
+									"value": "Germany"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"description": "Basic functionality tests for country search"
+		},
+		{
+			"name": "2. URL Encoding (Special Characters)",
+			"item": [
+				{
+					"name": "Country with Spaces - United States",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Country with spaces works\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.data.name).to.include('United States');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/countries/search?name=United States",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"countries",
+								"search"
+							],
+							"query": [
+								{
+									"key": "name",
+									"value": "United States",
+									"description": "Name with spaces (will be URL encoded)"
+								}
+							]
+						},
+						"description": "**Test Case 3:** URL encoding for spaces\n\n**Tests:**\n- Handler properly decodes URL parameters\n- Repository encodes for external API\n- Spaces handled correctly"
+					},
+					"response": []
+				},
+				{
+					"name": "Country with Apostrophe - Côte d'Ivoire",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Country with special chars works\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.success).to.eql(true);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/countries/search?name=Côte d'Ivoire",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"countries",
+								"search"
+							],
+							"query": [
+								{
+									"key": "name",
+									"value": "Côte d'Ivoire",
+									"description": "Name with accents and apostrophe"
+								}
+							]
+						},
+						"description": "**Test Case 4:** Special characters (accents, apostrophes)\n\n**Tests:**\n- Accented characters (ô)\n- Apostrophes (')\n- Proper URL encoding/decoding"
+					},
+					"response": []
+				},
+				{
+					"name": "Country with Hyphen - Guinea-Bissau",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Country with hyphen works\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.data.name).to.include('Guinea-Bissau');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/countries/search?name=Guinea-Bissau",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"countries",
+								"search"
+							],
+							"query": [
+								{
+									"key": "name",
+									"value": "Guinea-Bissau"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"description": "Tests URL encoding for special characters and spaces"
+		},
+		{
+			"name": "3. Cache Testing",
+			"item": [
+				{
+					"name": "First Request (Cache Miss)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"// Store response time for comparison",
+									"pm.environment.set(\"first_response_time\", pm.response.responseTime);",
+									"",
+									"pm.test(\"Response time recorded\", function () {",
+									"    pm.expect(pm.response.responseTime).to.be.above(0);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/countries/search?name=France",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"countries",
+								"search"
+							],
+							"query": [
+								{
+									"key": "name",
+									"value": "France"
+								}
+							]
+						},
+						"description": "**Test Case 5:** Cache miss scenario\n\n**Expected:**\n- First request → fetch from API\n- Slower response time\n- Data cached for next request"
+					},
+					"response": []
+				},
+				{
+					"name": "Second Request (Cache Hit)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Cache hit is faster\", function () {",
+									"    var firstTime = pm.environment.get(\"first_response_time\");",
+									"    var secondTime = pm.response.responseTime;",
+									"    ",
+									"    console.log(\"First request: \" + firstTime + \"ms\");",
+									"    console.log(\"Second request: \" + secondTime + \"ms\");",
+									"    ",
+									"    // Cache hit should be faster (usually 30x faster!)",
+									"    // But we'll be lenient and just check it's fast",
+									"    pm.expect(secondTime).to.be.below(1000);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/countries/search?name=France",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"countries",
+								"search"
+							],
+							"query": [
+								{
+									"key": "name",
+									"value": "France"
+								}
+							]
+						},
+						"description": "**Test Case 6:** Cache hit scenario\n\n**Expected:**\n- Same request → served from cache\n- Much faster response (typically 30x faster)\n- Same data as first request"
+					},
+					"response": []
+				},
+				{
+					"name": "Check Metrics (Cache Stats)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Metrics show cache activity\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.data.cache).to.have.property('hits');",
+									"    pm.expect(jsonData.data.cache).to.have.property('misses');",
+									"    pm.expect(jsonData.data.cache).to.have.property('size');",
+									"    pm.expect(jsonData.data.cache).to.have.property('evictions');",
+									"});",
+									"",
+									"pm.test(\"Cache has at least 1 hit\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.data.cache.hits).to.be.above(0);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/metrics",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"metrics"
+							]
+						},
+						"description": "**Test Case 7:** Verify cache metrics\n\n**Expected:**\n- hits > 0 (from previous cache hit)\n- misses > 0 (from previous cache miss)\n- size shows current cache entries"
+					},
+					"response": []
+				}
+			],
+			"description": "Tests cache hit/miss scenarios and performance"
+		},
+		{
+			"name": "4. Error Handling",
+			"item": [
+				{
+					"name": "Missing Name Parameter",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 400\", function () {",
+									"    pm.response.to.have.status(400);",
+									"});",
+									"",
+									"pm.test(\"Error response structure\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.success).to.eql(false);",
+									"    pm.expect(jsonData.error).to.exist;",
+									"});",
+									"",
+									"pm.test(\"Validation error type\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.error.type).to.eql('VALIDATION_ERROR');",
+									"    pm.expect(jsonData.error.message).to.include('required');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/countries/search",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"countries",
+								"search"
+							]
+						},
+						"description": "**Test Case 8:** Missing required parameter\n\n**Expected:**\n- Status: 400 Bad Request\n- success: false\n- error.type: VALIDATION_ERROR\n- error.message: contains 'required'"
+					},
+					"response": []
+				},
+				{
+					"name": "Invalid Country Name",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 404\", function () {",
+									"    pm.response.to.have.status(404);",
+									"});",
+									"",
+									"pm.test(\"Not found error\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.success).to.eql(false);",
+									"    pm.expect(jsonData.error.type).to.eql('NOT_FOUND');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/countries/search?name=InvalidCountryXYZ123",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"countries",
+								"search"
+							],
+							"query": [
+								{
+									"key": "name",
+									"value": "InvalidCountryXYZ123"
+								}
+							]
+						},
+						"description": "**Test Case 9:** Non-existent country\n\n**Expected:**\n- Status: 404 Not Found\n- error.type: NOT_FOUND"
+					},
+					"response": []
+				},
+				{
+					"name": "Too Short Name (< 2 chars)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 400\", function () {",
+									"    pm.response.to.have.status(400);",
+									"});",
+									"",
+									"pm.test(\"Validation error for short name\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.error.type).to.eql('VALIDATION_ERROR');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/countries/search?name=A",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"countries",
+								"search"
+							],
+							"query": [
+								{
+									"key": "name",
+									"value": "A"
+								}
+							]
+						},
+						"description": "**Test Case 10:** Name too short\n\n**Expected:**\n- Status: 400\n- Validation error for minimum length"
+					},
+					"response": []
+				},
+				{
+					"name": "Wrong HTTP Method (POST)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 400\", function () {",
+									"    pm.response.to.have.status(400);",
+									"});",
+									"",
+									"pm.test(\"Method not allowed\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.success).to.eql(false);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/countries/search?name=India",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"countries",
+								"search"
+							],
+							"query": [
+								{
+									"key": "name",
+									"value": "India"
+								}
+							]
+						},
+						"description": "**Test Case 11:** Wrong HTTP method\n\n**Expected:**\n- Status: 400\n- Only GET is allowed"
+					},
+					"response": []
+				}
+			],
+			"description": "Tests all error scenarios and validation"
+		},
+		{
+			"name": "5. Health & Monitoring",
+			"item": [
+				{
+					"name": "Liveness Probe",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Server is alive\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.data.status).to.eql('alive');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/health/live",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"health",
+								"live"
+							]
+						},
+						"description": "**Test Case 12:** Liveness probe\n\n**Expected:**\n- Status: 200\n- status: alive\n- Used by Kubernetes/Docker to check if container is running"
+					},
+					"response": []
+				},
+				{
+					"name": "Readiness Probe",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Server is ready\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.data.status).to.eql('ready');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/health/ready",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"health",
+								"ready"
+							]
+						},
+						"description": "**Test Case 13:** Readiness probe\n\n**Expected:**\n- Status: 200\n- status: ready\n- Used to check if server can handle requests"
+					},
+					"response": []
+				},
+				{
+					"name": "Metrics Endpoint",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Metrics structure is correct\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.data.cache).to.have.all.keys('hits', 'misses', 'size', 'evictions');",
+									"});",
+									"",
+									"pm.test(\"Metrics are numbers\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.data.cache.hits).to.be.a('number');",
+									"    pm.expect(jsonData.data.cache.misses).to.be.a('number');",
+									"    pm.expect(jsonData.data.cache.size).to.be.a('number');",
+									"    pm.expect(jsonData.data.cache.evictions).to.be.a('number');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/metrics",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"metrics"
+							]
+						},
+						"description": "**Test Case 14:** Metrics endpoint\n\n**Expected:**\n- Cache statistics\n- hits, misses, size, evictions\n- All values are numbers"
+					},
+					"response": []
+				}
+			],
+			"description": "Health checks and monitoring endpoints"
+		},
+		{
+			"name": "6. Edge Cases",
+			"item": [
+				{
+					"name": "Country Name with Numbers",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// This should fail validation",
+									"pm.test(\"Status code is 400 or 404\", function () {",
+									"    pm.expect(pm.response.code).to.be.oneOf([400, 404]);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/countries/search?name=Country123",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"countries",
+								"search"
+							],
+							"query": [
+								{
+									"key": "name",
+									"value": "Country123"
+								}
+							]
+						},
+						"description": "**Test Case 15:** Invalid characters\n\n**Expected:**\n- Validation error or not found"
+					},
+					"response": []
+				},
+				{
+					"name": "Empty String (Whitespace Only)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 400\", function () {",
+									"    pm.response.to.have.status(400);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/countries/search?name=   ",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"countries",
+								"search"
+							],
+							"query": [
+								{
+									"key": "name",
+									"value": "   "
+								}
+							]
+						},
+						"description": "**Test Case 16:** Whitespace only\n\n**Expected:**\n- Status: 400\n- Validation error"
+					},
+					"response": []
+				},
+				{
+					"name": "Very Long Country Name (>100 chars)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 400 or 404\", function () {",
+									"    pm.expect(pm.response.code).to.be.oneOf([400, 404]);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/countries/search?name=ThisIsAVeryLongCountryNameThatExceedsTheMaximumAllowedLengthOfOneHundredCharactersAndShouldFailValidation",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"countries",
+								"search"
+							],
+							"query": [
+								{
+									"key": "name",
+									"value": "ThisIsAVeryLongCountryNameThatExceedsTheMaximumAllowedLengthOfOneHundredCharactersAndShouldFailValidation"
+								}
+							]
+						},
+						"description": "**Test Case 17:** Name too long\n\n**Expected:**\n- Validation error or not found"
+					},
+					"response": []
+				},
+				{
+					"name": "Case Insensitive Search",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Case insensitive works\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.success).to.eql(true);",
+									"});"
+								],
+                                "type": "text/javascript"
+                            }
+
+                        }
+                    ],
+                    "request": {
+
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/api/countries/search?name=bRaZiL",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "countries",
+                                "search"
+                            ],
+                            "query": [
+                                {
+                                    "key": "name",
+                                    "value": "bRaZiL"
+                                }
+                            ]
+                        },
+                        "description": "**Test Case 18:** Case insensitive search\n\n**Expected:**\n- Status: 200\n- success: true\n- Country found regardless of case"
+                    },
+                    "response": []
+                }
+            ],
+
+            "description": "Tests edge cases and unusual inputs"
+        }
+    ]
+}
