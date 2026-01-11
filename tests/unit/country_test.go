@@ -3,7 +3,7 @@ package unit
 import (
 	"testing"
 
-	"CountryAPI/internal/domain"
+	"github.com/krishnajain872/country-search-api-cache/internal/domain"
 )
 
 func TestNewCountry(t *testing.T) {

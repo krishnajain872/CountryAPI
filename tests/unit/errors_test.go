@@ -4,8 +4,8 @@ import (
 	"errors"
 	"testing"
 
-	appErr "CountryAPI/pkg/error"
-	"CountryAPI/pkg/types"
+	appErr "github.com/krishnajain872/country-search-api-cache/pkg/error"
+	"github.com/krishnajain872/country-search-api-cache/pkg/types"
 )
 
 func TestValidationError(t *testing.T) {

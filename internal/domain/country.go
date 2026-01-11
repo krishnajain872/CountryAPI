@@ -3,8 +3,8 @@ package domain
 import (
 	"fmt"
 
-	"CountryAPI/pkg/validator"
-	"CountryAPI/pkg/types"
+	"github.com/krishnajain872/country-search-api-cache/pkg/validator"
+	"github.com/krishnajain872/country-search-api-cache/pkg/types"
 )
 
 // NewCountry creates a new Country entity

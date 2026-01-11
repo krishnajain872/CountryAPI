@@ -3,7 +3,7 @@ package unit
 import (
 	"testing"
 
-	"CountryAPI/pkg/validator"
+	"github.com/krishnajain872/country-search-api-cache/pkg/validator"
 )
 
 func TestValidate_Success(t *testing.T) {

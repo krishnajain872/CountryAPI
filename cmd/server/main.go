@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"CountryAPI/internal/domain"
+	"github.com/krishnajain872/country-search-api-cache/internal/domain"
 )
 
 func main() {

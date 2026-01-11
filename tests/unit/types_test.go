@@ -3,7 +3,7 @@ package unit
 import (
 	"testing"
 
-	"CountryAPI/pkg/types"
+	"github.com/krishnajain872/country-search-api-cache/pkg/types"
 )
 
 func TestSearchRequest(t *testing.T) {

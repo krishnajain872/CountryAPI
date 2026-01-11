@@ -1,76 +1,83 @@
-.PHONY: help build run test test-coverage test-race clean lint fmt
+.PHONY: help build run test test-coverage test-race clean lint fmt deps docker-build docker-run
 
-help: ## Display this help screen
-	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
+APP_NAME := server
+BIN_DIR := bin
+COVERAGE_FILE := coverage.out
+COVERAGE_HTML := coverage.html
 
-build: ## Build the application
-	@echo "Building..."
-	@go build -o bin/server cmd/server/main.go
-	@echo "Build complete: bin/server"
+# ========================================
+# HELP
+# ========================================
+help: ## Show available commands
+	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | \
+	awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-18s\033[0m %s\n", $$1, $$2}'
 
-run: ## Run the application
-	@echo "Running server..."
+# ========================================
+# BUILD & RUN
+# ========================================
+build: ## Build application
+	@echo "🔨 Building..."
+	@go build -o $(BIN_DIR)/$(APP_NAME) cmd/server/main.go
+	@echo "✅ Build complete: $(BIN_DIR)/$(APP_NAME)"
+
+run: ## Run application
+	@echo "🚀 Running server..."
 	@go run cmd/server/main.go
 
-test: ## Run tests
-	@echo "Running tests..."
+# ========================================
+# TESTING
+# ========================================
+test: ## Run all tests
+	@echo "🧪 Running tests..."
 	@go test -v ./...
 
-test-coverage: ## Run tests with coverage
-	@echo "Running tests with coverage..."
-	@go test -coverprofile=coverage.out ./...
-	@go tool cover -html=coverage.out -o coverage.html
-	@echo "Coverage report: coverage.html"
+test-coverage: ## Run full coverage (cmd + internal + pkg)
+	@echo "📊 Running coverage tests..."
+	@go test ./... \
+		-covermode=atomic \
+		-coverpkg=./... \
+		-coverprofile=$(COVERAGE_FILE)
+	@go tool cover -func=$(COVERAGE_FILE)
+	@go tool cover -html=$(COVERAGE_FILE) -o $(COVERAGE_HTML)
+	@echo "✅ Coverage report generated: $(COVERAGE_HTML)"
 
-test-race: ## Run tests with race detector
-	@echo "Running tests with race detector..."
+test-race: ## Run race detector
+	@echo "🏁 Running race detector..."
 	@go test -race ./...
 
-clean: ## Clean build artifacts
-	@echo "Cleaning..."
-	@rm -rf bin/
-	@rm -f coverage.out coverage.html
-	@echo "Clean complete"
-
-lint: ## Run linter
-	@echo "Running linter..."
-	@golangci-lint run ./...
-
+# ========================================
+# QUALITY
+# ========================================
 fmt: ## Format code
-	@echo "Formatting code..."
+	@echo "🧹 Formatting..."
 	@go fmt ./...
 	@goimports -w .
 
-deps: ## Download dependencies
-	@echo "Downloading dependencies..."
+lint: ## Run linter
+	@echo "🔍 Running linter..."
+	@golangci-lint run ./...
+
+deps: ## Download & tidy dependencies
+	@echo "📦 Installing dependencies..."
 	@go mod download
 	@go mod tidy
 
+# ========================================
+# CLEAN
+# ========================================
+clean: ## Clean artifacts
+	@echo "🧽 Cleaning..."
+	@rm -rf $(BIN_DIR)
+	@rm -f $(COVERAGE_FILE) $(COVERAGE_HTML)
+	@echo "✅ Clean complete"
+
+# ========================================
+# DOCKER
+# ========================================
 docker-build: ## Build Docker image
-	@echo "Building Docker image..."
+	@echo "🐳 Building Docker image..."
 	@docker build -t country-search-api:latest .
 
 docker-run: ## Run Docker container
-	@echo "Running Docker container..."
+	@echo "🐳 Running Docker container..."
 	@docker run -p 8000:8000 country-search-api:latest
-
-# ========================================
-# FILE: .env.example
-# ========================================
-# Server Configuration
-SERVER_HOST=localhost
-SERVER_PORT=8000
-SERVER_READ_TIMEOUT=15s
-SERVER_WRITE_TIMEOUT=15s
-
-# Cache Configuration
-CACHE_TTL=5m
-CACHE_MAX_SIZE=1000
-
-# External API Configuration
-REST_COUNTRIES_API_URL=https://restcountries.com/v3.1
-API_TIMEOUT=10s
-
-# Logger Configuration
-LOG_LEVEL=info
-LOG_FORMAT=json

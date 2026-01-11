@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"time"
 
-	"CountryAPI/pkg/types"
+	"github.com/krishnajain872/country-search-api-cache/pkg/types"
 )
 
 /* =====================

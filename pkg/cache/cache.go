@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"CountryAPI/pkg/types"
+	"github.com/krishnajain872/country-search-api-cache/pkg/types"
 )
 
 // Cache interface - The CONTRACT

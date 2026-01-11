@@ -3,7 +3,7 @@ package unit
 import (
 	"testing"
 
-	"CountryAPI/pkg/utils/json"
+	"github.com/krishnajain872/country-search-api-cache/pkg/utils/json"
 )
 
 type sample struct {

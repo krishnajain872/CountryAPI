@@ -5,7 +5,7 @@ import (
 	"regexp"
 	"strings"
 
-	appErr "CountryAPI/pkg/error"
+	appErr "github.com/krishnajain872/country-search-api-cache/pkg/error"
 )
 
 type Rule func() error

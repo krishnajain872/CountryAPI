@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"strings"
 
-	"CountryAPI/pkg/validator"
-	"CountryAPI/pkg/types"
+	"github.com/krishnajain872/country-search-api-cache/pkg/validator"
+	"github.com/krishnajain872/country-search-api-cache/pkg/types"
 )
 
 // NewSearchRequest creates a validated SearchRequest
