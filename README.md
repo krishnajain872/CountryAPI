@@ -823,6 +823,8 @@ go mod download
 
 # 3. Test API
 curl "http://localhost:8000/api/countries/search?name=India"
+                OR
+curl "https://countryapi-v152.onrender.com/api/countries/search?name=India"   (LIVE SERVER)
 
 # 4. Run Tests
 ./scripts/build.sh test-all
