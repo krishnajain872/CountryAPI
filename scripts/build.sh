@@ -64,7 +64,7 @@ case $TARGET in
 
     run)
         echo -e "${YELLOW}🚀 Running server...${RESET}"
-        go run ${PROJECT_ROOT}/cmd/server/main.go
+        go run ${PROJECT_ROOT}/cmd/server/.
         ;;
 
     test)
