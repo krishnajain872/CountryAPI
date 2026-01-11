@@ -7,6 +7,7 @@ import (
 	"time"
 	
 	"github.com/krishnajain872/country-search-api-cache/internal/config"
+	"github.com/krishnajain872/country-search-api-cache/internal/service"
 	"github.com/krishnajain872/country-search-api-cache/internal/logger"
 	"github.com/krishnajain872/country-search-api-cache/pkg/cache"
 	"github.com/krishnajain872/country-search-api-cache/pkg/types"
@@ -38,7 +39,7 @@ func TestCountryService_SearchCountry_CacheHit(t *testing.T) {
 		},
 	}
 	
-	service := NewCountryService(mockRepo, memCache, log, 5*time.Minute)
+	service := service.NewCountryService(mockRepo, memCache, log, 5*time.Minute)
 	
 	// Pre-populate cache
 	country := &types.Country{
@@ -90,7 +91,7 @@ func TestCountryService_SearchCountry_CacheMiss(t *testing.T) {
 		},
 	}
 	
-	service := NewCountryService(mockRepo, memCache, log, 5*time.Minute)
+	service := service.NewCountryService(mockRepo, memCache, log, 5*time.Minute)
 	
 	// Test
 	result, err := service.SearchCountry(context.Background(), "India")
@@ -130,7 +131,7 @@ func TestCountryService_SearchCountry_InvalidInput(t *testing.T) {
 		},
 	}
 	
-	service := NewCountryService(mockRepo, memCache, log, 5*time.Minute)
+	service := service.NewCountryService(mockRepo, memCache, log, 5*time.Minute)
 	
 	// Test with empty name
 	_, err := service.SearchCountry(context.Background(), "")

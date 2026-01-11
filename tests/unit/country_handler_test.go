@@ -8,6 +8,7 @@ import (
 	"github.com/krishnajain872/country-search-api-cache/internal/config"
 	"github.com/krishnajain872/country-search-api-cache/internal/logger"
 	"github.com/krishnajain872/country-search-api-cache/pkg/types"
+   handler_pkg	"github.com/krishnajain872/country-search-api-cache/internal/handler"
 )
 
 // Mock service
@@ -43,7 +44,7 @@ func TestCountryHandler_SearchCountry_Success(t *testing.T) {
 		},
 	}
 	
-	handler := NewCountryHandler(mockSvc, log)
+	handler := handler_pkg.NewCountryHandler(mockSvc, log)
 	
 	req := httptest.NewRequest(http.MethodGet, "/api/countries/search?name=India", nil)
 	w := httptest.NewRecorder()
@@ -70,7 +71,7 @@ func TestCountryHandler_SearchCountry_MissingName(t *testing.T) {
 		},
 	}
 	
-	handler := NewCountryHandler(mockSvc, log)
+	handler := handler_pkg.NewCountryHandler(mockSvc, log)
 	
 	req := httptest.NewRequest(http.MethodGet, "/api/countries/search", nil)
 	w := httptest.NewRecorder()
@@ -97,7 +98,7 @@ func TestCountryHandler_SearchCountry_WrongMethod(t *testing.T) {
 		},
 	}
 	
-	handler := NewCountryHandler(mockSvc, log)
+	handler := handler_pkg.NewCountryHandler(mockSvc, log)
 	
 	req := httptest.NewRequest(http.MethodPost, "/api/countries/search?name=India", nil)
 	w := httptest.NewRecorder()

@@ -1,20 +1,19 @@
 // ========================================
-// FILE: pkg/cache/memory_cache_test.go
-// Unit tests for cache implementation
+// FILE: pkg/cache_data/memory_cache_test.go
+// Unit tests for cache_data implementation
 // ========================================
 package unit
 
 import (
 	"context"
 	"fmt"
-	"sync"
 	"testing"
 	"time"
-    "github.com/krishnajain872/country-search-api-cache/pkg/cache"
+    cache_pkg "github.com/krishnajain872/country-search-api-cache/pkg/cache"
 	"github.com/krishnajain872/country-search-api-cache/pkg/types"
 )
 
-// TestNewMemoryCache tests cache initialization
+// TestNewMemoryCache tests cache_data initialization
 func TestNewMemoryCache(t *testing.T) {
 	tests := []struct {
 		name    string
@@ -28,33 +27,33 @@ func TestNewMemoryCache(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			cache := NewMemoryCache(tt.ttl, tt.maxSize)
+			cache_data := cache_pkg.NewMemoryCache(tt.ttl, tt.maxSize)
 			
-			if cache == nil {
-				t.Fatal("NewMemoryCache returned nil")
+			if cache_data == nil {
+				t.Fatal("cache_pkg.NewMemoryCache returned nil")
 			}
 			
-			if cache.ttl != tt.ttl {
-				t.Errorf("Expected ttl %v, got %v", tt.ttl, cache.ttl)
+			if cache_data.TTL() != tt.TTL() {
+				t.Errorf("Expected ttl %v, got %v", tt.ttl, cache_data.ttl)
 			}
 			
-			if cache.maxSize != tt.maxSize {
-				t.Errorf("Expected maxSize %d, got %d", tt.maxSize, cache.maxSize)
+			if cache_data.maxSize != tt.maxSize {
+				t.Errorf("Expected maxSize %d, got %d", tt.maxSize, cache_data.maxSize)
 			}
 			
-			if cache.data == nil {
-				t.Error("Cache data map not initialized")
+			if cache_data.data == nil {
+				t.Error("cache_data data map not initialized")
 			}
 			
-			cache.Stop()
+			cache_data.Stop()
 		})
 	}
 }
 
 // TestMemoryCache_Set tests the Set operation
 func TestMemoryCache_Set(t *testing.T) {
-	cache := NewMemoryCache(5*time.Minute, 100)
-	defer cache.Stop()
+	cache_data := cache_pkg.NewMemoryCache(5*time.Minute, 100)
+	defer cache_data.Stop()
 	ctx := context.Background()
 
 	tests := []struct {
@@ -72,15 +71,15 @@ func TestMemoryCache_Set(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := cache.Set(ctx, tt.key, tt.value, tt.ttl)
+			err := cache_data.Set(ctx, tt.key, tt.value, tt.ttl)
 			
 			if err != nil {
 				t.Errorf("Set failed: %v", err)
 			}
 			
-			stats := cache.Stats()
+			stats := cache_data.Stats()
 			if stats.Size == 0 {
-				t.Error("Cache size should be greater than 0 after Set")
+				t.Error("cache_data size should be greater than 0 after Set")
 			}
 		})
 	}
@@ -88,8 +87,8 @@ func TestMemoryCache_Set(t *testing.T) {
 
 // TestMemoryCache_Get tests the Get operation
 func TestMemoryCache_Get(t *testing.T) {
-	cache := NewMemoryCache(5*time.Minute, 100)
-	defer cache.Stop()
+	cache_data := cache_pkg.NewMemoryCache(5*time.Minute, 100)
+	defer cache_data.Stop()
 	ctx := context.Background()
 
 	tests := []struct {
@@ -127,9 +126,9 @@ func TestMemoryCache_Get(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			cache.Set(ctx, tt.setupKey, tt.setupVal, 0)
+			cache_data.Set(ctx, tt.setupKey, tt.setupVal, 0)
 			
-			val, err := cache.Get(ctx, tt.getKey)
+			val, err := cache_data.Get(ctx, tt.getKey)
 			
 			if tt.wantError {
 				if err == nil {
@@ -152,8 +151,8 @@ func TestMemoryCache_Get(t *testing.T) {
 
 // TestMemoryCache_TTL tests time-to-live functionality
 func TestMemoryCache_TTL(t *testing.T) {
-	cache := NewMemoryCache(100*time.Millisecond, 100)
-	defer cache.Stop()
+	cache_data := cache_pkg.NewMemoryCache(100*time.Millisecond, 100)
+	defer cache_data.Stop()
 	ctx := context.Background()
 
 	tests := []struct {
@@ -170,13 +169,13 @@ func TestMemoryCache_TTL(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			key := fmt.Sprintf("ttl-%s", tt.name)
-			cache.Set(ctx, key, "value", tt.ttl)
+			cache_data.Set(ctx, key, "value", tt.ttl)
 			
 			if tt.waitTime > 0 {
 				time.Sleep(tt.waitTime)
 			}
 			
-			_, err := cache.Get(ctx, key)
+			_, err := cache_data.Get(ctx, key)
 			
 			if tt.shouldFind && err != nil {
 				t.Errorf("Expected to find key, got error: %v", err)
@@ -191,33 +190,33 @@ func TestMemoryCache_TTL(t *testing.T) {
 
 // TestMemoryCache_Delete tests the Delete operation
 func TestMemoryCache_Delete(t *testing.T) {
-	cache := NewMemoryCache(5*time.Minute, 100)
-	defer cache.Stop()
+	cache_data := cache_pkg.NewMemoryCache(5*time.Minute, 100)
+	defer cache_data.Stop()
 	ctx := context.Background()
 
 	// Setup
-	cache.Set(ctx, "key1", "value1", 0)
+	cache_data.Set(ctx, "key1", "value1", 0)
 	
 	// Verify exists
-	_, err := cache.Get(ctx, "key1")
+	_, err := cache_data.Get(ctx, "key1")
 	if err != nil {
 		t.Fatal("Setup failed: key should exist")
 	}
 	
 	// Delete
-	err = cache.Delete(ctx, "key1")
+	err = cache_data.Delete(ctx, "key1")
 	if err != nil {
 		t.Errorf("Delete failed: %v", err)
 	}
 	
 	// Verify deleted
-	_, err = cache.Get(ctx, "key1")
+	_, err = cache_data.Get(ctx, "key1")
 	if err != types.ErrCacheMiss {
 		t.Error("Key should be deleted")
 	}
 	
 	// Delete non-existing key (should not error)
-	err = cache.Delete(ctx, "nonexistent")
+	err = cache_data.Delete(ctx, "nonexistent")
 	if err != nil {
 		t.Errorf("Delete non-existent key should not error: %v", err)
 	}
@@ -225,28 +224,28 @@ func TestMemoryCache_Delete(t *testing.T) {
 
 // TestMemoryCache_Clear tests the Clear operation
 func TestMemoryCache_Clear(t *testing.T) {
-	cache := NewMemoryCache(5*time.Minute, 100)
-	defer cache.Stop()
+	cache_data := cache_pkg.NewMemoryCache(5*time.Minute, 100)
+	defer cache_data.Stop()
 	ctx := context.Background()
 
 	// Add multiple entries
 	for i := 0; i < 10; i++ {
-		cache.Set(ctx, fmt.Sprintf("key%d", i), fmt.Sprintf("value%d", i), 0)
+		cache_data.Set(ctx, fmt.Sprintf("key%d", i), fmt.Sprintf("value%d", i), 0)
 	}
 	
-	stats := cache.Stats()
+	stats := cache_data.Stats()
 	if stats.Size != 10 {
 		t.Errorf("Expected 10 entries, got %d", stats.Size)
 	}
 	
 	// Clear
-	err := cache.Clear(ctx)
+	err := cache_data.Clear(ctx)
 	if err != nil {
 		t.Errorf("Clear failed: %v", err)
 	}
 	
 	// Verify cleared
-	stats = cache.Stats()
+	stats = cache_data.Stats()
 	if stats.Size != 0 {
 		t.Errorf("Expected 0 entries after clear, got %d", stats.Size)
 	}
@@ -254,21 +253,21 @@ func TestMemoryCache_Clear(t *testing.T) {
 
 // TestMemoryCache_Stats tests the Stats operation
 func TestMemoryCache_Stats(t *testing.T) {
-	cache := NewMemoryCache(5*time.Minute, 100)
-	defer cache.Stop()
+	cache_data := cache_pkg.NewMemoryCache(5*time.Minute, 100)
+	defer cache_data.Stop()
 	ctx := context.Background()
 
 	// Initial stats
-	stats := cache.Stats()
+	stats := cache_data.Stats()
 	if stats.Hits != 0 || stats.Misses != 0 || stats.Size != 0 {
 		t.Error("Initial stats should be zero")
 	}
 
 	// Add entry and get (hit)
-	cache.Set(ctx, "key1", "value1", 0)
-	cache.Get(ctx, "key1")
+	cache_data.Set(ctx, "key1", "value1", 0)
+	cache_data.Get(ctx, "key1")
 	
-	stats = cache.Stats()
+	stats = cache_data.Stats()
 	if stats.Hits != 1 {
 		t.Errorf("Expected 1 hit, got %d", stats.Hits)
 	}
@@ -277,9 +276,9 @@ func TestMemoryCache_Stats(t *testing.T) {
 	}
 
 	// Get non-existent (miss)
-	cache.Get(ctx, "key2")
+	cache_data.Get(ctx, "key2")
 	
-	stats = cache.Stats()
+	stats = cache_data.Stats()
 	if stats.Misses != 1 {
 		t.Errorf("Expected 1 miss, got %d", stats.Misses)
 	}
@@ -288,26 +287,26 @@ func TestMemoryCache_Stats(t *testing.T) {
 // TestMemoryCache_MaxSize tests size limit enforcement
 func TestMemoryCache_MaxSize(t *testing.T) {
 	maxSize := 10
-	cache := NewMemoryCache(5*time.Minute, maxSize)
-	defer cache.Stop()
+	cache_data := cache_pkg.NewMemoryCache(5*time.Minute, maxSize)
+	defer cache_data.Stop()
 	ctx := context.Background()
 
-	// Fill cache to max
+	// Fill cache_data to max
 	for i := 0; i < maxSize; i++ {
-		cache.Set(ctx, fmt.Sprintf("key%d", i), fmt.Sprintf("value%d", i), 0)
+		cache_data.Set(ctx, fmt.Sprintf("key%d", i), fmt.Sprintf("value%d", i), 0)
 	}
 	
-	stats := cache.Stats()
+	stats := cache_data.Stats()
 	if stats.Size != int64(maxSize) {
 		t.Errorf("Expected size %d, got %d", maxSize, stats.Size)
 	}
 
 	// Add one more (should evict oldest)
-	cache.Set(ctx, "new-key", "new-value", 0)
+	cache_data.Set(ctx, "new-key", "new-value", 0)
 	
-	stats = cache.Stats()
+	stats = cache_data.Stats()
 	if stats.Size > int64(maxSize) {
-		t.Errorf("Cache exceeded max size: %d > %d", stats.Size, maxSize)
+		t.Errorf("cache_data exceeded max size: %d > %d", stats.Size, maxSize)
 	}
 	
 	if stats.Evictions < 1 {
@@ -317,28 +316,28 @@ func TestMemoryCache_MaxSize(t *testing.T) {
 
 // TestMemoryCache_LRU tests LRU eviction
 func TestMemoryCache_LRU(t *testing.T) {
-	cache := NewMemoryCache(5*time.Minute, 3)
-	defer cache.Stop()
+	cache_data := cache_pkg.NewMemoryCache(5*time.Minute, 3)
+	defer cache_data.Stop()
 	ctx := context.Background()
 
 	// Add 3 entries
-	cache.Set(ctx, "key1", "value1", 0)
+	cache_data.Set(ctx, "key1", "value1", 0)
 	time.Sleep(10 * time.Millisecond)
-	cache.Set(ctx, "key2", "value2", 0)
+	cache_data.Set(ctx, "key2", "value2", 0)
 	time.Sleep(10 * time.Millisecond)
-	cache.Set(ctx, "key3", "value3", 0)
+	cache_data.Set(ctx, "key3", "value3", 0)
 
 	// Access key1 to make it recently used
-	cache.Get(ctx, "key1")
+	cache_data.Get(ctx, "key1")
 	time.Sleep(10 * time.Millisecond)
 
 	// Add new entry (should evict key2, the oldest unaccessed)
-	cache.Set(ctx, "key4", "value4", 0)
+	cache_data.Set(ctx, "key4", "value4", 0)
 
 	// Check that key1 and key3 still exist
-	_, err1 := cache.Get(ctx, "key1")
-	_, err3 := cache.Get(ctx, "key3")
-	_, err2 := cache.Get(ctx, "key2")
+	_, err1 := cache_data.Get(ctx, "key1")
+	_, err3 := cache_data.Get(ctx, "key3")
+	_, err2 := cache_data.Get(ctx, "key2")
 
 	if err1 != nil {
 		t.Error("key1 should still exist (was recently accessed)")
@@ -353,36 +352,36 @@ func TestMemoryCache_LRU(t *testing.T) {
 
 // TestMemoryCache_Cleanup tests automatic cleanup
 func TestMemoryCache_Cleanup(t *testing.T) {
-	cache := NewMemoryCache(100*time.Millisecond, 100)
-	defer cache.Stop()
+	cache_data := cache_pkg.NewMemoryCache(100*time.Millisecond, 100)
+	defer cache_data.Stop()
 	ctx := context.Background()
 
 	// Add entries with short TTL
 	for i := 0; i < 5; i++ {
-		cache.Set(ctx, fmt.Sprintf("key%d", i), fmt.Sprintf("value%d", i), 100*time.Millisecond)
+		cache_data.Set(ctx, fmt.Sprintf("key%d", i), fmt.Sprintf("value%d", i), 100*time.Millisecond)
 	}
 
-	stats := cache.Stats()
+	stats := cache_data.Stats()
 	initialSize := stats.Size
 
 	// Wait for cleanup (runs every minute, but entries expire in 100ms)
 	time.Sleep(150 * time.Millisecond)
 	
 	// Manually trigger cleanup by accessing expired entry
-	cache.Get(ctx, "key0")
+	cache_data.Get(ctx, "key0")
 
 	// Wait a bit more for cleanup goroutine
 	time.Sleep(100 * time.Millisecond)
 
 	// All entries should be expired
 	for i := 0; i < 5; i++ {
-		_, err := cache.Get(ctx, fmt.Sprintf("key%d", i))
+		_, err := cache_data.Get(ctx, fmt.Sprintf("key%d", i))
 		if err != types.ErrCacheMiss {
 			t.Errorf("Entry key%d should be expired", i)
 		}
 	}
 
-	stats = cache.Stats()
+	stats = cache_data.Stats()
 	t.Logf("Initial size: %d, Final size: %d, Evictions: %d", 
 		initialSize, stats.Size, stats.Evictions)
 }

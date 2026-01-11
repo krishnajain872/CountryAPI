@@ -6,10 +6,11 @@ import (
 	"sync"
 	"testing"
 	"time"
+	cache_pkg "github.com/krishnajain872/country-search-api-cache/pkg/cache"
 )
 
 func TestMemoryCache_ConcurrentAccess(t *testing.T) {
-	cache := NewMemoryCache(5*time.Minute, 1000)
+	cache := cache_pkg.NewMemoryCache(5*time.Minute, 1000)
 	ctx := context.Background()
 	
 	var wg sync.WaitGroup
@@ -49,7 +50,7 @@ func TestMemoryCache_ConcurrentAccess(t *testing.T) {
 }
 
 func TestMemoryCache_ConcurrentReadWrite(t *testing.T) {
-	cache := NewMemoryCache(5*time.Minute, 1000)
+	cache := cache_pkg.NewMemoryCache(5*time.Minute, 1000)
 	ctx := context.Background()
 	
 	var wg sync.WaitGroup
@@ -82,7 +83,7 @@ func TestMemoryCache_ConcurrentReadWrite(t *testing.T) {
 }
 // TestMemoryCache_ConcurrentSet tests concurrent writes
 func TestMemoryCache_ConcurrentSet(t *testing.T) {
-	cache := NewMemoryCache(5*time.Minute, 10000)
+	cache := cache_pkg.NewMemoryCache(5*time.Minute, 10000)
 	defer cache.Stop()
 	ctx := context.Background()
 
@@ -113,7 +114,7 @@ func TestMemoryCache_ConcurrentSet(t *testing.T) {
 
 // TestMemoryCache_ConcurrentGet tests concurrent reads
 func TestMemoryCache_ConcurrentGet(t *testing.T) {
-	cache := NewMemoryCache(5*time.Minute, 10000)
+	cache := cache_pkg.NewMemoryCache(5*time.Minute, 10000)
 	defer cache.Stop()
 	ctx := context.Background()
 
@@ -148,7 +149,7 @@ func TestMemoryCache_ConcurrentGet(t *testing.T) {
 
 // TestMemoryCache_ConcurrentDelete tests concurrent deletes
 func TestMemoryCache_ConcurrentDelete(t *testing.T) {
-	cache := NewMemoryCache(5*time.Minute, 10000)
+	cache := cache_pkg.NewMemoryCache(5*time.Minute, 10000)
 	defer cache.Stop()
 	ctx := context.Background()
 
@@ -177,7 +178,7 @@ func TestMemoryCache_ConcurrentDelete(t *testing.T) {
 
 // TestMemoryCache_ConcurrentStats tests stats under concurrent access
 func TestMemoryCache_ConcurrentStats(t *testing.T) {
-	cache := NewMemoryCache(5*time.Minute, 10000)
+	cache := cache_pkg.NewMemoryCache(5*time.Minute, 10000)
 	defer cache.Stop()
 	ctx := context.Background()
 
