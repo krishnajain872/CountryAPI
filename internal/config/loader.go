@@ -6,7 +6,7 @@ import (
 	"os"
 	"strconv"
 	"time"
-
+	"strings"
 	"github.com/joho/godotenv"
 )
 
@@ -56,10 +56,39 @@ func loadExternalAPIConfig() *ExternalAPIConfig {
 	return cfg
 }
 
+// loadLoggerConfig loads logger config from env variables
 func loadLoggerConfig() *LoggerConfig {
 	cfg := defaultLoggerConfig()
-	cfg.Level = getEnv("LOG_LEVEL", cfg.Level)
-	cfg.Format = getEnv("LOG_FORMAT", cfg.Format)
+
+	// Environment: development, staging, production
+	env := getEnv("LOG_ENV", string(cfg.Environment))
+	cfg.Environment = LogEnvType(env)
+
+	// Severity level: debug, info, warn, error, critical
+	sev := getEnv("LOG_LEVEL", string(cfg.Severity))
+	cfg.Severity = LogSeverity(sev)
+
+	// Mode: console, file, kafka (comma-separated)
+	modeEnv := getEnv("LOG_MODE", "console")
+	modeList := strings.Split(modeEnv, ",")
+	var modes []LogModeType
+	for _, m := range modeList {
+		switch strings.ToLower(strings.TrimSpace(m)) {
+		case "console":
+			modes = append(modes, ConsoleMode)
+		case "file":
+			modes = append(modes, FileMode)
+			// future: case "kafka": modes = append(modes, KafkaMode)
+		}
+	}
+	cfg.Mode = modes
+
+	// File logging options
+	cfg.FilePath = getEnv("LOG_FILE_PATH", cfg.FilePath)
+	cfg.MaxSizeMB = getEnvAsInt("LOG_MAX_SIZE_MB", cfg.MaxSizeMB)
+	cfg.MaxBackups = getEnvAsInt("LOG_MAX_BACKUPS", cfg.MaxBackups)
+	cfg.MaxAgeDays = getEnvAsInt("LOG_MAX_AGE_DAYS", cfg.MaxAgeDays)
+
 	return cfg
 }
 
