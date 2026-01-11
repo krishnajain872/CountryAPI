@@ -1,3 +1,3 @@
-module github.com/krishnajain872/countery_search_api_cache_go_lang_assigememt
+module github.com/krishnajain872/country-search-api-cache
 
-go 1.25.0
+go 1.22
