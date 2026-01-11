@@ -4,7 +4,54 @@ package config
 import "time"
 
 // ====================
-// Config Structs
+// Logger helper types
+// ====================
+
+// LogEnvType represents environment mode
+type LogEnvType string
+
+const (
+	Development LogEnvType = "development"
+	Staging     LogEnvType = "staging"
+	Production  LogEnvType = "production"
+)
+
+// LogModeType represents logging output type
+type LogModeType string
+
+const (
+	ConsoleMode LogModeType = "console"
+	FileMode    LogModeType = "file"
+	// KafkaMode LogModeType = "kafka" // future extension
+)
+
+// LogSeverity represents minimum severity of logs
+type LogSeverity string
+
+const (
+	DebugSeverity    LogSeverity = "debug"
+	InfoSeverity     LogSeverity = "info"
+	WarnSeverity     LogSeverity = "warn"
+	ErrorSeverity    LogSeverity = "error"
+	CriticalSeverity LogSeverity = "critical"
+)
+
+// ====================
+// Logger Config
+// ====================
+
+type LoggerConfig struct {
+	Environment LogEnvType
+	Mode        []LogModeType
+	Severity    LogSeverity
+	FilePath    string
+	MaxSizeMB   int
+	MaxBackups  int
+	MaxAgeDays  int
+}
+
+// ====================
+// Other Configs
 // ====================
 
 type ServerConfig struct {
@@ -24,14 +71,21 @@ type ExternalAPIConfig struct {
 	Timeout          time.Duration
 }
 
-type LoggerConfig struct {
-	Level  string
-	Format string
-}
-
 // ====================
 // Defaults
 // ====================
+
+func defaultLoggerConfig() *LoggerConfig {
+	return &LoggerConfig{
+		Environment: Development,
+		Mode:        []LogModeType{ConsoleMode},
+		Severity:    InfoSeverity,
+		FilePath:    "logs/app.log",
+		MaxSizeMB:   10,
+		MaxBackups:  5,
+		MaxAgeDays:  7,
+	}
+}
 
 func defaultServerConfig() *ServerConfig {
 	return &ServerConfig{
@@ -53,12 +107,5 @@ func defaultExternalAPIConfig() *ExternalAPIConfig {
 	return &ExternalAPIConfig{
 		RestCountriesURL: "https://restcountries.com/v3.1",
 		Timeout:          10 * time.Second,
-	}
-}
-
-func defaultLoggerConfig() *LoggerConfig {
-	return &LoggerConfig{
-		Level:  "info",
-		Format: "json",
 	}
 }

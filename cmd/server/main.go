@@ -1,30 +1,47 @@
+// cmd/server/main.go
 package main
 
 import (
-	"fmt"
-	"github.com/krishnajain872/country-search-api-cache/internal/domain"
 	"github.com/krishnajain872/country-search-api-cache/internal/config"
+	"github.com/krishnajain872/country-search-api-cache/internal/domain"
+	"github.com/krishnajain872/country-search-api-cache/internal/logger"
 )
 
 func main() {
-	// Load configuration (optional)
+	// -----------------------------
+	// 1️⃣ Load configuration
+	// -----------------------------
 	cfg := config.LoadConfig(".env")
-	fmt.Printf("Server running at %s:%s\n", cfg.Server.Host, cfg.Server.Port)
+
+	// Initialize logger with config
+	log := logger.NewLogger(cfg.Logger)
 
 	// -----------------------------
-	// 1️⃣ Create validated search request
+	// 2️⃣ Server start log
+	// -----------------------------
+	log.Info("Server starting...",
+		logger.String("host", cfg.Server.Host),
+		logger.String("port", cfg.Server.Port),
+	)
+
+	// -----------------------------
+	// 3️⃣ Create validated search request
 	// -----------------------------
 	searchReq, err := domain.NewSearchRequest("India")
 	if err != nil {
-		handleError(err)
+		log_string := handleError(err)
+		log.Error("Search request creation failed",
+			logger.String("error", log_string),
+		)
 		return
 	}
 
-	fmt.Println("Search Request:", searchReq)
-	fmt.Println("Cache Key:", domain.CacheKey(searchReq))
+	log.Info("Search request created",
+		logger.Any("request", searchReq),
+	)
 
 	// -----------------------------
-	// 2️⃣ Create country entity
+	// 4️⃣ Create country entity
 	// -----------------------------
 	country := domain.NewCountry(
 		"India",
@@ -34,12 +51,17 @@ func main() {
 	)
 
 	// -----------------------------
-	// 3️⃣ Validate domain entity
+	// 5️⃣ Validate country entity
 	// -----------------------------
 	if err := domain.ValidateCountry(country); err != nil {
-		handleError(err)
+		log_string := handleError(err)
+		log.Error("Country validation failed",
+			logger.String("error", log_string),
+		)
 		return
 	}
 
-	fmt.Println("Country:", domain.CountryString(country))
+	log.Info("Country validated successfully",
+		logger.Any("country", country),
+	)
 }
