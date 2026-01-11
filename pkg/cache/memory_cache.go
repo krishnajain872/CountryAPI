@@ -1,21 +1,15 @@
-// File: internal/cache/memory_cache.go
+// ========================================
+// FILE: pkg/cache/memory_cache.go (FIXED)
+// ========================================
 package cache
 
 import (
 	"context"
-	"time"
 	"sync"
-	"errors"
+	"time"
+
+	"github.com/krishnajain872/country-search-api-cache/pkg/types"
 )
-
-var ErrCacheMiss = errors.New("cache: key not found")
-
-type Stats struct {
-	Hits      int64
-	Misses    int64
-	Evictions int64
-	Size      int64
-}
 
 type cacheEntry struct {
 	value      any
@@ -26,7 +20,7 @@ type cacheEntry struct {
 type MemoryCache struct {
 	mu      sync.RWMutex
 	data    map[string]*cacheEntry
-	stats   Stats
+	stats   types.Stats // ✅ CHANGED: Use types.Stats instead of cache.Stats
 	ttl     time.Duration
 	maxSize int
 	stopCh  chan struct{}
@@ -55,7 +49,7 @@ func (c *MemoryCache) Get(ctx context.Context, key string) (any, error) {
 		c.mu.Lock()
 		c.stats.Misses++
 		c.mu.Unlock()
-		return nil, ErrCacheMiss
+		return nil, types.ErrCacheMiss
 	}
 
 	// Update last access safely
@@ -110,7 +104,8 @@ func (c *MemoryCache) Clear(ctx context.Context) error {
 }
 
 // Stats returns cache statistics
-func (c *MemoryCache) Stats() Stats {
+// ✅ CHANGED: Return types.Stats instead of cache.Stats
+func (c *MemoryCache) Stats() types.Stats {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
 	return c.stats
