@@ -829,5 +829,11 @@ curl "http://localhost:8000/api/countries/search?name=India"
 
 # 5. Check Coverage
 ./scripts/build.sh coverage
+```
+### TEST LIVE SERVER 
+https://countryapi-v152.onrender.com/health/live
+
+### USE POSTMAT COLLECTION FROM ./tests/postman_collection
+
 
  
