@@ -58,7 +58,7 @@ case $TARGET in
     build)
         echo -e "${YELLOW}🔨 Building project...${RESET}"
         mkdir -p ${BIN_DIR}
-        go build -o ${BIN_DIR}/${APP_NAME} ${PROJECT_ROOT}/cmd/server/main.go
+        go build -o ${BIN_DIR}/${APP_NAME} ${PROJECT_ROOT}/cmd/server/.
         echo -e "${GREEN}✅ Build complete: ${BIN_DIR}/${APP_NAME}${RESET}"
         ;;
 
