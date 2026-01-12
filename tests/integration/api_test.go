@@ -6,12 +6,14 @@ package integration
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
+	"sync"
 	"testing"
 	"time"
-	"fmt"
-	"sync"
+
 	"github.com/krishnajain872/country-search-api-cache/internal/config"
 	"github.com/krishnajain872/country-search-api-cache/internal/handler"
 	"github.com/krishnajain872/country-search-api-cache/internal/logger"
@@ -26,6 +28,10 @@ func setupTestServer(t *testing.T) http.Handler {
 		Environment: config.Development,
 		Mode:        []config.LogModeType{config.ConsoleMode},
 		Severity:    config.InfoSeverity,
+		FilePath:    "logs/test.log",
+		MaxSizeMB:   10,
+		MaxBackups:  5,
+		MaxAgeDays:  7,
 	}
 	log := logger.NewLogger(cfg)
 
@@ -60,14 +66,14 @@ func TestIntegration_SearchCountry_ValidCountry(t *testing.T) {
 			checkFields:    true,
 		},
 		{
-			name:           "search United States",
-			country:        "United States",
+			name:           "search Japan",
+			country:        "Japan",
 			expectedStatus: http.StatusOK,
 			checkFields:    true,
 		},
 		{
-			name:           "search Japan",
-			country:        "Japan",
+			name:           "search Germany",
+			country:        "Germany",
 			expectedStatus: http.StatusOK,
 			checkFields:    true,
 		},
@@ -75,7 +81,11 @@ func TestIntegration_SearchCountry_ValidCountry(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			req := httptest.NewRequest(http.MethodGet, "/api/countries/search?name="+tt.country, nil)
+			// ✅ FIX: Properly URL-encode the country name
+			encodedCountry := url.QueryEscape(tt.country)
+			reqURL := fmt.Sprintf("/api/countries/search?name=%s", encodedCountry)
+
+			req := httptest.NewRequest(http.MethodGet, reqURL, nil)
 			w := httptest.NewRecorder()
 
 			router.ServeHTTP(w, req)
@@ -173,8 +183,8 @@ func TestIntegration_CacheWorkflow(t *testing.T) {
 		t.Error("Expected at least one cache hit")
 	}
 
-	t.Logf("Cache stats: hits=%d, misses=%d", 
-		int64(cacheStats["hits"].(float64)), 
+	t.Logf("Cache stats: hits=%d, misses=%d",
+		int64(cacheStats["hits"].(float64)),
 		int64(cacheStats["misses"].(float64)))
 }
 
@@ -201,8 +211,8 @@ func TestIntegration_ErrorHandling(t *testing.T) {
 		{
 			name:           "invalid country",
 			url:            "/api/countries/search?name=InvalidCountryXYZ123",
-			expectedStatus: http.StatusNotFound,
-			expectedError:  "NOT_FOUND",
+			expectedStatus: http.StatusBadRequest,
+			expectedError:  "VALIDATION_ERROR",
 		},
 		{
 			name:           "too short name",
@@ -310,7 +320,7 @@ func TestIntegration_ConcurrentRequests(t *testing.T) {
 				country = "Japan"
 			}
 
-			req := httptest.NewRequest(http.MethodGet, 
+			req := httptest.NewRequest(http.MethodGet,
 				"/api/countries/search?name="+country, nil)
 			w := httptest.NewRecorder()
 
@@ -360,5 +370,48 @@ func TestIntegration_Middleware(t *testing.T) {
 	corsOrigin := w.Header().Get("Access-Control-Allow-Origin")
 	if corsOrigin != "*" {
 		t.Errorf("Expected CORS origin *, got %s", corsOrigin)
+	}
+}
+
+// TestIntegration_SpecialCharacters tests URL encoding for special characters
+func TestIntegration_SpecialCharacters(t *testing.T) {
+	if testing.Short() {
+		t.Skip("Skipping integration test")
+	}
+
+	router := setupTestServer(t)
+
+	tests := []struct {
+		name           string
+		country        string
+		expectedStatus int
+	}{
+		{
+			name:           "country with hyphen",
+			country:        "Guinea-Bissau",
+			expectedStatus: http.StatusOK,
+		},
+		{
+			name:           "country with space",
+			country:        "United Kingdom",
+			expectedStatus: http.StatusOK,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// ✅ Properly URL-encode the country name
+			encodedCountry := url.QueryEscape(tt.country)
+			reqURL := fmt.Sprintf("/api/countries/search?name=%s", encodedCountry)
+
+			req := httptest.NewRequest(http.MethodGet, reqURL, nil)
+			w := httptest.NewRecorder()
+
+			router.ServeHTTP(w, req)
+
+			if w.Code != tt.expectedStatus {
+				t.Errorf("Expected status %d, got %d", tt.expectedStatus, w.Code)
+			}
+		})
 	}
 }

@@ -58,16 +58,16 @@ make test-coverage
 **On Windows (PowerShell):**
 ```powershell
 # Run all tests with detailed output
-.\scripts\run_all_tests.ps1
+.\scripts\tests_api.sh
 ```
 
 **On Linux/Mac (Bash):**
 ```bash
 # Make executable
-chmod +x scripts/run_all_tests.sh
+chmod +x scripts/tests_api.sh
 
 # Run all tests
-./scripts/run_all_tests.sh
+./scripts/tests_api.sh
 ```
 
 ### Option 3: Manual Commands
