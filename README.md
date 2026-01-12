@@ -178,16 +178,13 @@ INFO    Server listening                {"address": "localhost:8000"}
 ### Quick Test (All Tests)
 ```bash
 # Run all tests
-./scripts/build.sh test
-
-# OR
-go test ./... -v
+./scripts/test_api.sh
 ```
 
 ### Comprehensive Test Suite
 ```bash
 # Run the complete test suite with phases
-./scripts/build.sh test-all
+./scripts/test_api.sh
 ```
 
 **Expected Output:**
