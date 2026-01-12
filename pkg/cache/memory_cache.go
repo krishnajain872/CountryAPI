@@ -1,5 +1,5 @@
 // ========================================
-// FILE: pkg/cache/memory_cache.go (FIXED)
+// FILE: pkg/cache/memory_cache.go
 // ========================================
 package cache
 
@@ -25,16 +25,17 @@ type MemoryCache struct {
 	maxSize int
 	stopCh  chan struct{}
 }
+
 func (c *MemoryCache) TTL() time.Duration {
-    return c.ttl
+	return c.ttl
 }
 
 func (c *MemoryCache) MaxSize() int {
-    return c.maxSize
+	return c.maxSize
 }
 
 func (c *MemoryCache) Data() map[string]*cacheEntry {
-    return c.data
+	return c.data
 }
 
 // NewMemoryCache creates a new in-memory cache

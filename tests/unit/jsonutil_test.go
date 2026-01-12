@@ -3,14 +3,15 @@ package unit
 import (
 	"testing"
 
-	"github.com/krishnajain872/country-search-api-cache/pkg/utils/json"
+	jsonutil "github.com/krishnajain872/country-search-api-cache/pkg/utils/json"
 )
 
-type sample struct {
-	Name string
-	Age  int
-}
 func TestMarshal_Unmarshal(t *testing.T) {
+	type sample struct {
+		Name string
+		Age  int
+	}
+
 	orig := sample{Name: "Krishna", Age: 25}
 
 	jsonStr, err := jsonutil.Marshal(orig)
