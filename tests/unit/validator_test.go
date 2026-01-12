@@ -36,6 +36,9 @@ func TestValidate_MinLength(t *testing.T) {
 
 func TestValidate_MaxLength(t *testing.T) {
 	long := make([]byte, 101)
+	for i := range long {
+		long[i] = 'a'
+	}
 	err := validator.Validate(
 		validator.MaxLength("name", string(long), 100),
 	)
@@ -55,7 +58,7 @@ func TestValidate_CountryName(t *testing.T) {
 
 func TestValidate_Min(t *testing.T) {
 	err := validator.Validate(
-		validator.Min("population", -1, 0),
+		validator.Min("population", int64(-1), int64(0)),
 	)
 	if err == nil {
 		t.Fatal("expected min int error")
