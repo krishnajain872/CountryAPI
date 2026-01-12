@@ -87,10 +87,7 @@
 ### Step 1: Clone the Repository
 ```bash
 # Using HTTPS
-git clone https://github.com/your-username/country-search-api.git
-
-# OR using the existing folder
-cd C:\Users\krish\Downloads\countery_search_api_cache_go_lang_assigememt
+git clone https://github.com/krishnajain872/country-search-api.git
 ```
 
 ### Step 2: Navigate to Project Directory
@@ -143,7 +140,7 @@ LOG_FILE_PATH=logs/app.log
 ### Method 1: Using Go Run (Quick Start)
 ```bash
 # Run directly
-go run cmd/server/main.go
+go run cmd/server/.
 
 # OR using the script (Linux/Mac/Git Bash)
 chmod +x scripts/build.sh
