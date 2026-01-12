@@ -1,160 +1,3 @@
-#!/usr/bin/env bash
-# ========================================
-# FILE: scripts/test_api.sh
-# Complete test runner with fixed coverage and beautiful HTML reports
-# ========================================
-
-set -e
-
-echo "=========================================="
-echo "Running Complete Test Suite"
-echo "=========================================="
-
-# Colors
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-CYAN='\033[0;36m'
-NC='\033[0m' # No Color
-
-# Test results
-TOTAL_TESTS=0
-FAILED_TESTS=0
-START_TIME=$(date +%s)
-
-# Create reports directory
-mkdir -p reports
-
-# -----------------------------
-# Phase 1: Unit Tests
-# -----------------------------
-echo ""
-echo -e "${YELLOW}Phase 1: Unit Tests${NC}"
-echo "=========================================="
-if go test -v ./tests/unit/...; then
-    echo -e "${GREEN}✅ Unit tests passed${NC}"
-else
-    echo -e "${RED}❌ Unit tests failed${NC}"
-    FAILED_TESTS=$((FAILED_TESTS+1))
-fi
-TOTAL_TESTS=$((TOTAL_TESTS+1))
-
-# -----------------------------
-# Phase 2: Integration Tests
-# -----------------------------
-echo ""
-echo -e "${YELLOW}Phase 2: Integration Tests${NC}"
-echo "=========================================="
-echo -e "${CYAN}Note: Integration tests require internet connection${NC}"
-if go test -v ./tests/integration/... -timeout 30s; then
-    echo -e "${GREEN}✅ Integration tests passed${NC}"
-else
-    echo -e "${YELLOW}⚠️  Integration tests had failures (might be network issues)${NC}"
-    echo -e "${YELLOW}   This is not counted as a critical failure${NC}"
-    # Don't fail the entire suite for integration test failures
-fi
-TOTAL_TESTS=$((TOTAL_TESTS+1))
-
-# -----------------------------
-# Phase 3: Race Condition Tests
-# -----------------------------
-echo ""
-echo -e "${YELLOW}Phase 3: Race Condition Tests${NC}"
-echo "=========================================="
-
-if [[ "$OSTYPE" == "msys" ]] || [[ "$OSTYPE" == "win32" ]]; then
-    if command -v gcc &> /dev/null; then
-        echo "GCC found, running race tests..."
-        export CGO_ENABLED=1
-        if go test -race -v ./tests/unit/... -run "Race"; then
-            echo -e "${GREEN}✅ Race tests passed${NC}"
-        else
-            echo -e "${RED}❌ Race tests failed${NC}"
-            FAILED_TESTS=$((FAILED_TESTS+1))
-        fi
-    else
-        echo -e "${YELLOW}⚠️  GCC not found - Skipping race tests on Windows${NC}"
-        echo -e "${YELLOW}   Race tests require CGO (C compiler)${NC}"
-        echo -e "${YELLOW}   Install TDM-GCC or MinGW-w64 to enable race tests${NC}"
-        echo -e "${GREEN}✓ Skipped (not a failure)${NC}"
-    fi
-else
-    export CGO_ENABLED=1
-    if go test -race -v ./tests/unit/... -run "Race"; then
-        echo -e "${GREEN}✅ Race tests passed${NC}"
-    else
-        echo -e "${RED}❌ Race tests failed${NC}"
-        FAILED_TESTS=$((FAILED_TESTS+1))
-    fi
-fi
-TOTAL_TESTS=$((TOTAL_TESTS+1))
-
-# -----------------------------
-# Phase 4: Coverage Report (FIXED)
-# -----------------------------
-echo ""
-echo -e "${YELLOW}Phase 4: Generating Coverage Report${NC}"
-echo "=========================================="
-
-# Generate coverage data with proper package tracking
-echo "Generating coverage data..."
-go test ./tests/... \
-    -coverprofile=coverage.out \
-    -covermode=atomic \
-    -coverpkg=./internal/...,./pkg/...,./cmd/... \
-    -timeout=30s 2>/dev/null || true
-
-if [ ! -f coverage.out ]; then
-    echo -e "${RED}❌ Coverage file not generated${NC}"
-    COVERAGE_PERCENT="0.0%"
-else
-    # Get coverage percentage
-    COVERAGE_PERCENT=$(go tool cover -func=coverage.out | grep total | awk '{print $3}')
-    echo -e "${CYAN}Total Coverage: ${COVERAGE_PERCENT}${NC}"
-
-    # Generate detailed coverage
-    go tool cover -func=coverage.out > coverage_details.txt 2>/dev/null || true
-    
-    # Generate HTML coverage report
-    echo "Generating HTML coverage report..."
-    go tool cover -html=coverage.out -o coverage.html 2>/dev/null || true
-    
-    if [ -f coverage.html ]; then
-        echo -e "${GREEN}✅ HTML coverage report generated: coverage.html${NC}"
-    else
-        echo -e "${RED}❌ Failed to generate HTML coverage report${NC}"
-    fi
-fi
-
-# -----------------------------
-# Phase 5: Generate Beautiful Summary Report
-# -----------------------------
-echo ""
-echo -e "${YELLOW}Phase 5: Generating Summary Report${NC}"
-echo "=========================================="
-
-END_TIME=$(date +%s)
-DURATION=$((END_TIME - START_TIME))
-CURRENT_DATE=$(date '+%Y-%m-%d %H:%M:%S')
-
-# Parse coverage by package (if coverage.out exists)
-declare -A PACKAGE_COVERAGE
-if [ -f coverage_details.txt ]; then
-    while IFS= read -r line; do
-        if [[ $line =~ ^github\.com.*\.go:[0-9]+: ]]; then
-            # Extract package name and coverage
-            PKG=$(echo "$line" | awk -F'/' '{print $(NF-1)}')
-            COV=$(echo "$line" | awk '{print $NF}')
-            
-            if [[ ! -v PACKAGE_COVERAGE[$PKG] ]]; then
-                PACKAGE_COVERAGE[$PKG]="$COV"
-            fi
-        fi
-    done < coverage_details.txt
-fi
-
-# Create beautiful HTML summary report
-cat > reports/test_summary.html << EOF
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -352,7 +195,7 @@ cat > reports/test_summary.html << EOF
         <div class="header">
             <h1>🧪 Test Summary Report</h1>
             <p><strong>Country Search API with Intelligent Caching</strong></p>
-            <p>Generated: ${CURRENT_DATE}</p>
+            <p>Generated: 2026-01-12 12:09:51</p>
         </div>
 
         <div class="content">
@@ -360,34 +203,34 @@ cat > reports/test_summary.html << EOF
             <div class="stats-grid">
                 <div class="stat-card">
                     <h3>Test Phases</h3>
-                    <div class="value">${TOTAL_TESTS}</div>
+                    <div class="value">3</div>
                 </div>
                 <div class="stat-card">
                     <h3>Failed Phases</h3>
-                    <div class="value">${FAILED_TESTS}</div>
+                    <div class="value">0</div>
                 </div>
                 <div class="stat-card">
                     <h3>Duration</h3>
-                    <div class="value">${DURATION}s</div>
+                    <div class="value">17s</div>
                 </div>
                 <div class="stat-card">
                     <h3>Coverage</h3>
-                    <div class="value">${COVERAGE_PERCENT}</div>
+                    <div class="value">70.5%</div>
                 </div>
             </div>
 
             <!-- Status Banner -->
-            <div class="status-banner $([ $FAILED_TESTS -eq 0 ] && echo "success" || echo "failure")">
-                <h2>$([ $FAILED_TESTS -eq 0 ] && echo "✅ All Tests Passed!" || echo "❌ Some Tests Failed")</h2>
-                <p>$([ $FAILED_TESTS -eq 0 ] && echo "Great job! Your code is working correctly." || echo "Please review the failed tests and fix the issues.")</p>
+            <div class="status-banner success">
+                <h2>✅ All Tests Passed!</h2>
+                <p>Great job! Your code is working correctly.</p>
             </div>
 
             <!-- Coverage Progress Bar -->
             <div class="section">
                 <h3>📊 Code Coverage</h3>
                 <div class="coverage-bar">
-                    <div class="coverage-fill" style="width: ${COVERAGE_PERCENT}">
-                        ${COVERAGE_PERCENT}
+                    <div class="coverage-fill" style="width: 70.5%">
+                        70.5%
                     </div>
                 </div>
                 <p>Coverage measures how much of your code is tested. Aim for >80% for production code.</p>
@@ -418,7 +261,7 @@ cat > reports/test_summary.html << EOF
                         <tr>
                             <td><strong>Phase 3</strong></td>
                             <td>Race Condition Tests</td>
-                            <td><span class="badge $([ $FAILED_TESTS -eq 0 ] && echo "badge-success" || echo "badge-danger")">$([ $FAILED_TESTS -eq 0 ] && echo "✅ Passed" || echo "❌ Failed")</span></td>
+                            <td><span class="badge badge-success">✅ Passed</span></td>
                         </tr>
                         <tr>
                             <td><strong>Phase 4</strong></td>
@@ -440,30 +283,54 @@ cat > reports/test_summary.html << EOF
                         </tr>
                     </thead>
                     <tbody>
-EOF
-
-# Add package coverage rows if data exists
-if [ ${#PACKAGE_COVERAGE[@]} -gt 0 ]; then
-    for PKG in "${!PACKAGE_COVERAGE[@]}"; do
-        COV="${PACKAGE_COVERAGE[$PKG]}"
-        cat >> reports/test_summary.html << EOF
                         <tr>
-                            <td><code>${PKG}</code></td>
-                            <td><strong>${COV}</strong></td>
+                            <td><code>handler</code></td>
+                            <td><strong>100.0%</strong></td>
                         </tr>
-EOF
-    done
-else
-    cat >> reports/test_summary.html << EOF
                         <tr>
-                            <td colspan="2" style="text-align: center; color: #6c757d;">
-                                No detailed package coverage available
-                            </td>
+                            <td><code>error</code></td>
+                            <td><strong>100.0%</strong></td>
                         </tr>
-EOF
-fi
-
-cat >> reports/test_summary.html << EOF
+                        <tr>
+                            <td><code>repository</code></td>
+                            <td><strong>100.0%</strong></td>
+                        </tr>
+                        <tr>
+                            <td><code>logger</code></td>
+                            <td><strong>78.6%</strong></td>
+                        </tr>
+                        <tr>
+                            <td><code>json</code></td>
+                            <td><strong>75.0%</strong></td>
+                        </tr>
+                        <tr>
+                            <td><code>domain</code></td>
+                            <td><strong>100.0%</strong></td>
+                        </tr>
+                        <tr>
+                            <td><code>httpclient</code></td>
+                            <td><strong>100.0%</strong></td>
+                        </tr>
+                        <tr>
+                            <td><code>types</code></td>
+                            <td><strong>66.7%</strong></td>
+                        </tr>
+                        <tr>
+                            <td><code>service</code></td>
+                            <td><strong>100.0%</strong></td>
+                        </tr>
+                        <tr>
+                            <td><code>validator</code></td>
+                            <td><strong>100.0%</strong></td>
+                        </tr>
+                        <tr>
+                            <td><code>cache</code></td>
+                            <td><strong>0.0%</strong></td>
+                        </tr>
+                        <tr>
+                            <td><code>config</code></td>
+                            <td><strong>0.0%</strong></td>
+                        </tr>
                     </tbody>
                 </table>
             </div>
@@ -497,53 +364,3 @@ cat >> reports/test_summary.html << EOF
     </div>
 </body>
 </html>
-EOF
-
-echo -e "${GREEN}✅ Summary report generated: reports/test_summary.html${NC}"
-
-# -----------------------------
-# Final Summary
-# -----------------------------
-echo ""
-echo "=========================================="
-echo "Test Suite Complete"
-echo "=========================================="
-echo ""
-echo "📊 Results:"
-echo "  Total Phases: ${TOTAL_TESTS}"
-echo "  Failed: ${FAILED_TESTS}"
-echo "  Duration: ${DURATION}s"
-echo "  Coverage: ${COVERAGE_PERCENT}"
-echo ""
-echo "📁 Reports generated:"
-echo "  📋 Summary: reports/test_summary.html"
-if [ -f coverage.html ]; then
-    echo "  📈 Coverage: coverage.html"
-fi
-if [ -f coverage_details.txt ]; then
-    echo "  📄 Details: coverage_details.txt"
-fi
-echo ""
-
-# Open reports in browser (platform-specific)
-echo "Opening test summary in browser..."
-if [ -f reports/test_summary.html ]; then
-    if [[ "$OSTYPE" == "msys" ]] || [[ "$OSTYPE" == "win32" ]]; then
-        start reports/test_summary.html 2>/dev/null || echo -e "${YELLOW}Open reports/test_summary.html manually${NC}"
-    elif [[ "$OSTYPE" == "darwin"* ]]; then
-        open reports/test_summary.html 2>/dev/null
-    else
-        xdg-open reports/test_summary.html 2>/dev/null || echo -e "${YELLOW}Open reports/test_summary.html manually${NC}"
-    fi
-fi
-
-echo ""
-if [ $FAILED_TESTS -eq 0 ]; then
-    echo -e "${GREEN}✅ All test phases passed! 🎉${NC}"
-    echo -e "${GREEN}Your code is ready for deployment!${NC}"
-    exit 0
-else
-    echo -e "${RED}❌ ${FAILED_TESTS} test phase(s) failed${NC}"
-    echo -e "${YELLOW}Please review the errors above and fix the issues.${NC}"
-    exit 1
-fi

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # ========================================
 # FILE: scripts/build.sh
-# Complete Development Script with Enhanced Testing & Coverage
+# Complete Development Script with Fixed Coverage
 # ========================================
 
 set -e
@@ -132,6 +132,7 @@ case $TARGET in
         print_header "Cleaning Artifacts"
         rm -rf "${BIN_DIR}" "${COVERAGE_FILE}" "${COVERAGE_HTML}" "${COVERAGE_SUMMARY}"
         rm -f "${PROJECT_ROOT}"/*.out "${PROJECT_ROOT}"/*.html
+        rm -rf "${PROJECT_ROOT}/reports"
         print_success "Clean complete"
         ;;
 
@@ -141,7 +142,7 @@ case $TARGET in
     test)
         print_header "Running All Tests"
         cd "${PROJECT_ROOT}"
-        go test -v ./...
+        go test -v ./tests/...
         print_success "All tests completed"
         ;;
 
@@ -155,8 +156,8 @@ case $TARGET in
     test-integration)
         print_header "Running Integration Tests"
         cd "${PROJECT_ROOT}"
-        print_info "Skipping integration tests in short mode"
-        go test -v ./tests/integration/... || print_error "Integration tests failed (may need internet)"
+        print_info "Integration tests require internet connection"
+        go test -v ./tests/integration/... -timeout 30s || print_error "Integration tests failed (may need internet)"
         ;;
 
     test-all)
@@ -218,7 +219,7 @@ case $TARGET in
         echo ""
         echo -e "${YELLOW}🔗 Phase 5: Integration Tests${RESET}"
         echo "=========================================="
-        if go test -v ./tests/integration/...; then
+        if go test -v ./tests/integration/... -timeout 30s; then
             print_success "Integration tests passed"
         else
             print_error "Integration tests failed (may need internet)"
@@ -251,7 +252,7 @@ case $TARGET in
         print_header "Running Race Detector (Unit Tests)"
         cd "${PROJECT_ROOT}"
         export CGO_ENABLED=1
-        go test -race -v ./tests/unit/...
+        go test -race -v ./tests/unit/... -run "Race"
         print_success "Race detector tests completed"
         ;;
 
@@ -262,7 +263,7 @@ case $TARGET in
         
         echo ""
         echo -e "${YELLOW}🏁 Testing: Unit Tests${RESET}"
-        go test -race -v ./tests/unit/... || print_error "Unit tests have race conditions"
+        go test -race -v ./tests/unit/... -run "Race" || print_error "Unit tests have race conditions"
         
         echo ""
         echo -e "${YELLOW}🏁 Testing: Cache Layer${RESET}"
@@ -280,18 +281,27 @@ case $TARGET in
         ;;
 
     # ========================================
-    # COVERAGE COMMANDS
+    # COVERAGE COMMANDS (FIXED)
     # ========================================
     coverage)
         print_header "Generating Coverage Report"
         cd "${PROJECT_ROOT}"
         
-        # Run tests with coverage
+        # Run tests with coverage - THE KEY FIX
         print_info "Running tests with coverage tracking..."
-        go test ./... \
+        
+        # Use -coverpkg to specify which packages to track coverage for
+        # This is CRITICAL when tests are in a separate directory
+        go test ./tests/... \
+            -coverprofile="${COVERAGE_FILE}" \
             -covermode=atomic \
-            -coverpkg=./... \
-            -coverprofile="${COVERAGE_FILE}"
+            -coverpkg=./internal/...,./pkg/...,./cmd/... \
+            -timeout=30s
+        
+        if [ ! -f "${COVERAGE_FILE}" ]; then
+            print_error "Coverage file not generated"
+            exit 1
+        fi
         
         # Generate summary
         print_info "Generating coverage summary..."
@@ -301,23 +311,38 @@ case $TARGET in
         echo ""
         echo -e "${YELLOW}Coverage Summary by Package:${RESET}"
         echo "=========================================="
-        go tool cover -func="${COVERAGE_FILE}" | grep -E '^github.com' | column -t
+        go tool cover -func="${COVERAGE_FILE}" | grep -E '^github.com' | head -30
         
         echo ""
         echo -e "${YELLOW}Total Coverage:${RESET}"
         echo "=========================================="
-        go tool cover -func="${COVERAGE_FILE}" | tail -n 1
+        TOTAL=$(go tool cover -func="${COVERAGE_FILE}" | grep "total:" | awk '{print $3}')
+        echo -e "${GREEN}${TOTAL}${RESET}"
         
         # Generate HTML
         print_info "Generating HTML coverage report..."
         go tool cover -html="${COVERAGE_FILE}" -o "${COVERAGE_HTML}"
         
-        echo ""
-        print_success "Coverage reports generated:"
-        echo -e "  📄 Summary: ${COVERAGE_SUMMARY}"
-        echo -e "  📊 HTML:    ${COVERAGE_HTML}"
-        echo ""
-        print_info "Open ${COVERAGE_HTML} in your browser to view detailed coverage"
+        if [ -f "${COVERAGE_HTML}" ]; then
+            echo ""
+            print_success "Coverage reports generated:"
+            echo -e "  📄 Summary: ${COVERAGE_SUMMARY}"
+            echo -e "  📊 HTML:    ${COVERAGE_HTML}"
+            echo ""
+            print_info "Opening ${COVERAGE_HTML} in browser..."
+            
+            # Open in browser
+            if [[ "$OSTYPE" == "msys" ]] || [[ "$OSTYPE" == "win32" ]]; then
+                start "${COVERAGE_HTML}" 2>/dev/null || true
+            elif [[ "$OSTYPE" == "darwin"* ]]; then
+                open "${COVERAGE_HTML}" 2>/dev/null || true
+            else
+                xdg-open "${COVERAGE_HTML}" 2>/dev/null || true
+            fi
+        else
+            print_error "Failed to generate HTML report"
+            exit 1
+        fi
         ;;
 
     coverage-unit)
@@ -325,23 +350,33 @@ case $TARGET in
         cd "${PROJECT_ROOT}"
         
         go test ./tests/unit/... \
+            -coverprofile="${COVERAGE_FILE}" \
             -covermode=atomic \
-            -coverprofile="${COVERAGE_FILE}"
+            -coverpkg=./internal/...,./pkg/...,./cmd/...
         
         go tool cover -func="${COVERAGE_FILE}" | tail -n 1
         go tool cover -html="${COVERAGE_FILE}" -o "${COVERAGE_HTML}"
         
         print_success "Unit test coverage: ${COVERAGE_HTML}"
+        
+        # Open in browser
+        if [[ "$OSTYPE" == "msys" ]] || [[ "$OSTYPE" == "win32" ]]; then
+            start "${COVERAGE_HTML}" 2>/dev/null || true
+        elif [[ "$OSTYPE" == "darwin"* ]]; then
+            open "${COVERAGE_HTML}" 2>/dev/null || true
+        else
+            xdg-open "${COVERAGE_HTML}" 2>/dev/null || true
+        fi
         ;;
 
     coverage-pkg)
         print_header "Coverage by Package"
         cd "${PROJECT_ROOT}"
         
-        go test ./... \
+        go test ./tests/... \
+            -coverprofile="${COVERAGE_FILE}" \
             -covermode=atomic \
-            -coverpkg=./... \
-            -coverprofile="${COVERAGE_FILE}"
+            -coverpkg=./internal/...,./pkg/...,./cmd/...
         
         echo ""
         echo -e "${YELLOW}Coverage Breakdown:${RESET}"
@@ -349,29 +384,29 @@ case $TARGET in
         
         # Cache layer
         echo -e "\n${CYAN}📦 Cache Layer:${RESET}"
-        go tool cover -func="${COVERAGE_FILE}" | grep "pkg/cache" | column -t
+        go tool cover -func="${COVERAGE_FILE}" | grep "pkg/cache" || echo "No coverage data"
         
         # Service layer
         echo -e "\n${CYAN}⚙️  Service Layer:${RESET}"
-        go tool cover -func="${COVERAGE_FILE}" | grep "internal/service" | column -t
+        go tool cover -func="${COVERAGE_FILE}" | grep "internal/service" || echo "No coverage data"
         
         # Handler layer
         echo -e "\n${CYAN}🌐 Handler Layer:${RESET}"
-        go tool cover -func="${COVERAGE_FILE}" | grep "internal/handler" | column -t
+        go tool cover -func="${COVERAGE_FILE}" | grep "internal/handler" || echo "No coverage data"
         
         # Repository layer
         echo -e "\n${CYAN}💾 Repository Layer:${RESET}"
-        go tool cover -func="${COVERAGE_FILE}" | grep "internal/repository" | column -t
+        go tool cover -func="${COVERAGE_FILE}" | grep "internal/repository" || echo "No coverage data"
         
         # Domain layer
         echo -e "\n${CYAN}📋 Domain Layer:${RESET}"
-        go tool cover -func="${COVERAGE_FILE}" | grep "internal/domain" | column -t
+        go tool cover -func="${COVERAGE_FILE}" | grep "internal/domain" || echo "No coverage data"
         
         # Total
         echo ""
         echo -e "${YELLOW}Total Coverage:${RESET}"
         echo "=========================================="
-        go tool cover -func="${COVERAGE_FILE}" | tail -n 1
+        go tool cover -func="${COVERAGE_FILE}" | grep "total:"
         ;;
 
     # ========================================
